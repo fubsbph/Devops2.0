@@ -5,6 +5,7 @@ import boto3
 import os
 from io import BytesIO
 
+
 # Loading Environment variable (AWS Access Key and Secret Key)
 from dotenv import load_dotenv
 load_dotenv()
@@ -26,10 +27,11 @@ app.add_middleware(
 # AWS S3 Configuration
 s3 = boto3.client(
     's3',
+    region_name='us-east-1',  # Change to your region
     aws_access_key_id= os.getenv("AWS_ACCESS_KEY"),
     aws_secret_access_key= os.getenv("AWS_SECRET_KEY"))
 
-bucket_name = 'YOUR_BUCKET_NAME' # Add your bucket name here
+bucket_name = 'devops-qr-bucket-yelyzaveta' # Add your bucket name here
 
 @app.post("/generate-qr/")
 async def generate_qr(url: str):
@@ -55,11 +57,15 @@ async def generate_qr(url: str):
 
     try:
         # Upload to S3
-        s3.put_object(Bucket=bucket_name, Key=file_name, Body=img_byte_arr, ContentType='image/png', ACL='public-read')
+        #s3.put_object(Bucket=bucket_name, Key=file_name, Body=img_byte_arr, ContentType='image/png', ACL='public-read')
+        s3.put_object(Bucket=bucket_name, Key=file_name, Body=img_byte_arr, ContentType='image/png')
+        print("Upload successful")
         
         # Generate the S3 URL
         s3_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
         return {"qr_code_url": s3_url}
     except Exception as e:
+        print(f"Upload failed: {e}")
+        print(f"Error uploading to S3: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
